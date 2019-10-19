@@ -8,4 +8,4 @@ Fall 2019
 
 ## Project proposal
 
-We intend to use manifold learning to defend neural networks against adversarial examples. Manifold learning attempts to find a lower dimensional geometric representation of the training data. Adversarial examples that make slight perturbations to the input data do not lie on the manifold. Based on this assumption, we propose using a distance metric to measure compare the new example to the learned manifold to identify adversarial examples.
+We intend to use manifold learning to defend neural networks against adversarial examples. Manifold learning attempts to find a lower dimensional geometric representation of the training data. Adversarial examples that make slight perturbations to the input data do not lie on the manifold. Based on this assumption, we propose using a similarity metric to compare the new example to the learned manifold to identify adversarial examples.
