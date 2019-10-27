@@ -6,6 +6,10 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+sklearn = "*"
+keras = "*"
+matplotlib = "*"
+tensorflow = "*"
 
 [requires]
 python_version = "3.6"
