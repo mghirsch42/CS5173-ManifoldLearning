@@ -10,6 +10,7 @@ sklearn = "*"
 keras = "*"
 matplotlib = "*"
 tensorflow = "*"
+numpy = "*"
 
 [requires]
 python_version = "3.6"
