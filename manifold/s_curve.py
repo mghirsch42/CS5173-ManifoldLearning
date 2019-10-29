@@ -52,21 +52,21 @@ def detect(samples, new_example):
     else:
         return False, closest_point
 
-def adversarial_example(samples, labels, model):
-    loss_object = keras.losses.CategoricalCrossentropy()
-    input_sample = (np.array([samples[0]]))
-    input_tensor = tf.convert_to_tensor(input_sample)
-    with tf.GradientTape() as tape:
-        tape.watch(input_tensor)
-        prediction = model.predict(input_sample)
-        print(type(labels[0]), type(prediction))
-        loss = loss_object([labels[0]], prediction)
-    gradient = tape.gradient((loss), input_tensor)
-    print(loss, input_tensor)
-    print(gradient)
-    signed_gradient = tf.sign(gradient)
-    return signed_gradient
-
+def adversarial_example(sample, label, model):
+    # see: https://medium.com/@ml.at.berkeley/tricking-neural-networks-create-your-own-adversarial-examples-a61eb7620fd8
+    
+    print(sample, label)
+    steps = 10
+    eta = 1   # step size
+    # random to initialize
+    x = np.random.normal(size=(np.shape(sample)))
+    print(x)
+    # gradient descent
+    for i in range(steps):
+        grad = keras.backend.gradients(sample[0], sample)
+        print("grad", grad)
+        x -= eta * grad
+    return x
 
 
 def main():
@@ -79,6 +79,8 @@ def main():
         else:
             labels.append(1)
 
+
+
     fig = plt.figure()
     ax = plt.axes(projection="3d")
     ax.scatter3D(samples[:,0], samples[:,1], samples[:,2], c=labels)
@@ -87,7 +89,6 @@ def main():
     labels = np.array([keras.utils.to_categorical(labels)])
     print(np.shape(samples))
     print(np.shape(labels))
-
     data_manifold = learn_manifold(samples)
     fig = plt.figure()
     ax = plt.axes()
@@ -98,7 +99,7 @@ def main():
     model.fit(samples, labels, epochs = 10)
 
 
-    evil = adversarial_example(samples, labels, model)
+    evil = adversarial_example(samples[0,0], labels[0,0], model)
     print(evil)
 
 
