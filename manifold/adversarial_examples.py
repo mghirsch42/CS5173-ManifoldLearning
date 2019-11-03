@@ -8,14 +8,42 @@ from keras import backend as K
 from keras.models import load_model
 from matplotlib import pyplot as plt
 import tensorflow as tf
+import numpy as np
+
+import moons
 
 import os
+
+def preprocessing(x_train, y_train):
+    
+    batch_size = 128
+    num_classes = 10
+    epochs = 2
+    # input image dimensions
+    img_rows, img_cols = 28, 28
+
+    if K.image_data_format() == 'channels_first':
+        x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
+        input_shape = (1, img_rows, img_cols)
+    else:
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+        input_shape = (img_rows, img_cols, 1)
+
+    x_train = x_train.astype('float32')
+    x_train /= 255
+    print('x_train shape:', x_train.shape)
+    print(x_train.shape[0], 'train samples')
+
+    # convert class vectors to binary class matrices
+    y_train = keras.utils.to_categorical(y_train, num_classes)
+
+    return x_train, y_train
 
 # from https://keras.io/examples/mnist_cnn/
 def generate_model(): 
     batch_size = 128
     num_classes = 10
-    epochs = 12
+    epochs = 2
 
     # input image dimensions
     img_rows, img_cols = 28, 28
@@ -72,20 +100,24 @@ def generate_model():
 
 def generate_adversarial(input_image, input_label, model):
     # from https://www.tensorflow.org/tutorials/generative/adversarial_fgsm
-    input_image = tf.convert_to_tensor([input_image])
-    input_image = tf.transpose(input_image, (1, 2, 0))
-    print(tf.rank(input_image))
-    print(tf.shape(input_image))
+    input_tensor = tf.convert_to_tensor(input_label)
+    input_image = np.reshape(input_image, (1, 28, 28, 1))
+    input_tensor = tf.convert_to_tensor(input_image)
+
+    print("input image shape:", tf.shape(input_image))
+    print("input tensor shape:", tf.shape(input_tensor))
 
     loss_object = tf.keras.losses.CategoricalCrossentropy()
 
     with tf.GradientTape() as tape:
-        tape.watch(input_image)
-        prediction = model(input_image)
+        tape.watch(input_tensor)
+        prediction = model.predict(input_image)
         loss = loss_object(input_label, prediction)
 
     # Get the gradients of the loss w.r.t to the input image.
-    gradient = tape.gradient(loss, input_image)
+    # print("Loss", loss)
+    # print("Input tensor", input_tensor)
+    gradient = tape.gradient(loss, input_tensor)
     # Get the sign of the gradients to create the perturbation
     signed_grad = tf.sign(gradient)
     return signed_grad
@@ -93,10 +125,22 @@ def generate_adversarial(input_image, input_label, model):
 def main():
     if os.path.exists("mnist_model.h5"):    
         model = load_model('mnist_model.h5')
-
+        model.build()
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        base_example = x_test[0]
-        base_label = y_test[0]
+        x_train, y_train = preprocessing(x_train, y_train)
+        print("x image", tf.shape(x_train[0]))
+        print("y image", tf.shape(y_train[0]))
+        base_example = x_train[0]
+        base_label = y_train[0]
+   
+        # moon stuff
+        # samples, labels = moons.generate_dataset()
+        # samples = np.array([samples])
+        # one_hot = np.array([keras.utils.to_categorical(labels)])
+        # model = moons.generate_moon_model()
+        # model.fit(samples, one_hot, epochs=3)
+        # base_example = samples[0]
+        # base_label = one_hot[0]
 
         generate_adversarial(base_example, base_label, model)
 

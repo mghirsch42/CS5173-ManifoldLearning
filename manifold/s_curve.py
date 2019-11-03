@@ -84,6 +84,7 @@ def main():
     fig = plt.figure()
     ax = plt.axes(projection="3d")
     ax.scatter3D(samples[:,0], samples[:,1], samples[:,2], c=labels)
+    
 
     samples = np.array([samples])
     labels = np.array([keras.utils.to_categorical(labels)])
