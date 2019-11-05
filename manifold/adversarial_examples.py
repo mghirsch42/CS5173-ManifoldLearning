@@ -89,10 +89,11 @@ def generate_model():
                 metrics=['accuracy'])
 
     model.fit(x_train, y_train,
-            batch_size=batch_size,
+            # steps_per_epoch=batch_size,
             epochs=epochs,
             verbose=1,
             validation_data=(x_test, y_test))
+            # validation_steps=batch_size)
     score = model.evaluate(x_test, y_test, verbose=0)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
@@ -100,51 +101,55 @@ def generate_model():
 
 def generate_adversarial(input_image, input_label, model):
     # from https://www.tensorflow.org/tutorials/generative/adversarial_fgsm
-    input_tensor = tf.convert_to_tensor(input_label)
+    # input_tensor = tf.convert_to_tensor(input_label)
     input_image = np.reshape(input_image, (1, 28, 28, 1))
-    input_tensor = tf.convert_to_tensor(input_image)
-
-    print("input image shape:", tf.shape(input_image))
-    print("input tensor shape:", tf.shape(input_tensor))
+    input_tensor = tf.Variable(input_image)
+    label_tensor = tf.convert_to_tensor(input_label)
 
     loss_object = tf.keras.losses.CategoricalCrossentropy()
 
     with tf.GradientTape() as tape:
         tape.watch(input_tensor)
-        prediction = model.predict(input_image)
+        prediction = model(input_tensor)
+        print(input_tensor)
+        print(input_label)
+        print(prediction)
         loss = loss_object(input_label, prediction)
+        print(loss)
 
     # Get the gradients of the loss w.r.t to the input image.
-    # print("Loss", loss)
-    # print("Input tensor", input_tensor)
+    print("Loss object", loss_object)
+    print("Input tensor", np.shape(input_tensor))
     gradient = tape.gradient(loss, input_tensor)
     # Get the sign of the gradients to create the perturbation
     signed_grad = tf.sign(gradient)
     return signed_grad
 
+def convert_to_model(seq_model):
+    # From https://github.com/keras-team/keras/issues/10386
+    input_layer = keras.layers.Input(batch_shape=seq_model.layers[0].input_shape)
+    prev_layer = input_layer
+    for layer in seq_model.layers:
+        layer._inbound_nodes = []
+        prev_layer = layer(prev_layer)
+    funcmodel = keras.models.Model([input_layer], [prev_layer])
+  
+    return funcmodel
+
 def main():
     if os.path.exists("mnist_model.h5"):    
         model = load_model('mnist_model.h5')
-        model.build()
+        model = convert_to_model(model) 
+        model.trainable = True       
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         x_train, y_train = preprocessing(x_train, y_train)
-        print("x image", tf.shape(x_train[0]))
-        print("y image", tf.shape(y_train[0]))
         base_example = x_train[0]
         base_label = y_train[0]
    
-        # moon stuff
-        # samples, labels = moons.generate_dataset()
-        # samples = np.array([samples])
-        # one_hot = np.array([keras.utils.to_categorical(labels)])
-        # model = moons.generate_moon_model()
-        # model.fit(samples, one_hot, epochs=3)
-        # base_example = samples[0]
-        # base_label = one_hot[0]
-
         generate_adversarial(base_example, base_label, model)
 
     else:
+        exit(0)
         model = generate_model()
         model.save("mnist_model.h5")
 
