@@ -36,7 +36,6 @@ def generate_adversarial(input_image, input_label, model):
 
     with tf.GradientTape() as tape:
         tape.watch(input_tensor)
-        # loss = loss_object(model, input_tensor, input_label)
         gradient = tape.gradient(loss_object, input_tensor)
 
     # Get the gradients of the loss w.r.t to the input image.
@@ -46,7 +45,7 @@ def generate_adversarial(input_image, input_label, model):
     # Get the sign of the gradients to create the perturbation
     print(gradient)
     signed_grad = tf.sign(gradient)
-    # return signed_grad
+    return signed_grad
 
 
 def convert_to_model(seq_model):
