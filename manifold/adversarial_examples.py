@@ -11,36 +11,42 @@ import tensorflow as tf
 import numpy as np
 
 import moons
-import mnist
+import mnist_model
 
 import os
 
 
 def generate_adversarial(input_image, input_label, model):
     # from https://www.tensorflow.org/tutorials/generative/adversarial_fgsm
-    # input_tensor = tf.convert_to_tensor(input_label)
-    input_image = np.reshape(input_image, (1, 28, 28, 1))
-    input_tensor = tf.Variable(input_image)
+
+    input_image = np.reshape(
+        input_image,
+        (1, input_image.shape[0], input_image.shape[1], input_image.shape[2]),
+    )
+    input_label = np.reshape(input_label, (1, input_label.shape[0]))
+    input_tensor = tf.convert_to_tensor(input_image)
     label_tensor = tf.convert_to_tensor(input_label)
 
-    loss_object = tf.keras.losses.CategoricalCrossentropy()
+    prediction = model(input_tensor)
+    print(input_label.shape)
+    print(prediction.shape)
+    loss_object = tf.compat.v1.losses.softmax_cross_entropy(
+        input_label, logits=prediction
+    )
 
     with tf.GradientTape() as tape:
         tape.watch(input_tensor)
-        prediction = model(input_tensor)
-        # print(input_tensor)
-        # print(input_label)
-        # print(prediction)
-        loss = loss_object(input_label, prediction)
-        print(loss)
+        # loss = loss_object(model, input_tensor, input_label)
+        gradient = tape.gradient(loss_object, input_tensor)
 
     # Get the gradients of the loss w.r.t to the input image.
     print("Loss object", loss_object)
     print("Input tensor", np.shape(input_tensor))
-    gradient = tape.gradient(loss, input_tensor)
+
     # Get the sign of the gradients to create the perturbation
+    print(gradient)
     signed_grad = tf.sign(gradient)
-    return signed_grad
+    # return signed_grad
 
 
 def convert_to_model(seq_model):
@@ -61,13 +67,15 @@ def main():
         model = convert_to_model(model)
         model.trainable = True
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        x_train, y_train, x_test, y_test, input_shape = mnist.preprocessing(
+        x_train, y_train, x_test, y_test, input_shape = mnist_model.preprocessing(
             x_train, y_train, x_test, y_test
         )
         base_example = x_train[0]
         base_label = y_train[0]
 
         generate_adversarial(base_example, base_label, model)
+    else:
+        print("model file does not exist")
 
 
 if __name__ == "__main__":
