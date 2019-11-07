@@ -89,7 +89,7 @@ def main(batch_size=128, epochs=2):
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
 
-    model.save("models/mnist_model2.h5")
+    model.save("mnist_model2.h5")
 
 
 if __name__ == "__main__":

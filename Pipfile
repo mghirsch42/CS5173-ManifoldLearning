@@ -4,13 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+rope = "*"
 
 [packages]
 sklearn = "*"
 keras = "*"
 matplotlib = "*"
-tensorflow = "*"
 numpy = "*"
+tensorflow = "==1.15"
 
 [requires]
 python_version = "3.6"
