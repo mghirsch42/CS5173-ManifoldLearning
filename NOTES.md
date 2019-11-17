@@ -1,5 +1,8 @@
 # Dev Notes
 
+* To use your locally saved h5 model, comment out the *.h5 line in .gitignore, and make sure to update the PATH_TO_MODEL variable in the code.
+
+
 ## Todos
 
 * make basic TensorFlow model 
