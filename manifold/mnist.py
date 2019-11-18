@@ -66,8 +66,8 @@ def main():
         )
         
         m_x = x_train.reshape((len(x_train), WIDTH*HEIGHT))        
-        manifold = lm.lle(m_x[:5000])
-        plt.scatter(manifold[:,0], manifold[:,1], c=colors)
+        manifold = lm.lle(m_x[:100])
+        plt.scatter(manifold[:,0], manifold[:,1], c=colors[:100])
         plt.show()
 
         # Choose example to perturb
