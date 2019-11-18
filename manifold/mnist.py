@@ -59,18 +59,14 @@ def main():
         model = convert_to_model(model)
         model.trainable = True
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        y_org = y_train
+        color_list = ["red", "orange", "yellow", "lime", "green", "cyan", "blue", "purple", "fuchsia", "peru"]
+        colors = [color_list[y_train[j]]  for j in range(len(y_train))]
         x_train, y_train, x_test, y_test, input_shape = mnist_model.preprocessing(
             x_train, y_train, x_test, y_test
         )
         
-        m_x = x_train.reshape((60000, 28*28))
-        color_list = ["red", "orange", "yellow", "lime", "green", "cyan", "blue", "purple", "fuchsia", "peru"]
-        colors = [color_list[y_org[j]]  for j in range(5000)]
-        print(np.shape(colors))
-        
+        m_x = x_train.reshape((len(x_train), WIDTH*HEIGHT))        
         manifold = lm.lle(m_x[:5000])
-        print(np.shape(manifold))
         plt.scatter(manifold[:,0], manifold[:,1], c=colors)
         plt.show()
 
