@@ -10,112 +10,87 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 
-from models import mnist_model
-import fgsm
-import learning_methods as lm
-
 import os
 
-WIDTH = 28
-HEIGHT = 28
-EPSILON = .15 # example values: low = .01, high = .15
-PATH_TO_MODEL = "models/mnist_model.h5"
+num_classes = 10
 
 
-def convert_to_model(seq_model):
-    # From https://github.com/keras-team/keras/issues/10386
-    input_layer = keras.layers.Input(batch_shape=seq_model.layers[0].input_shape)
-    prev_layer = input_layer
-    for layer in seq_model.layers:
-        layer._inbound_nodes = []
-        prev_layer = layer(prev_layer)
-    funcmodel = keras.models.Model([input_layer], [prev_layer])
+def preprocessing(x_train, y_train, x_test, y_test):
+    # input image dimensions
+    img_rows, img_cols = 28, 28
 
-    return funcmodel
-
-
-# Reshapes the input to the correct dimensions,
-# creates a new figure and displays the input
-def display(input):
-    if np.ndim(input) > 2:
-        input = input.reshape((HEIGHT, WIDTH))
-    plt.figure()
-    plt.imshow(input)
-
-
-# Returns 4D np array (1, HEIGHT, WIDTH, 1)
-def tensor_to_numpy(t):
-    sess = K.get_session()
-    t_np = sess.run(t)
-
-    # Get rid of the extra dimension
-    t_np = t_np.reshape(1, HEIGHT, WIDTH, 1)
-    return t_np
-
-
-def main():
-    if os.path.exists(PATH_TO_MODEL):    
-        model = load_model(PATH_TO_MODEL)    
-        model = convert_to_model(model)
-        model.trainable = True
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        color_list = ["red", "orange", "yellow", "lime", "green", "cyan", "blue", "purple", "fuchsia", "peru"]
-        colors = [color_list[y_train[j]]  for j in range(len(y_train))]
-        x_train, y_train, x_test, y_test, input_shape = mnist_model.preprocessing(
-            x_train, y_train, x_test, y_test
-        )
-        
-        m_x = x_train.reshape((len(x_train), WIDTH*HEIGHT))        
-        manifold = lm.lle(m_x[:5000])
-        plt.scatter(manifold[:,0], manifold[:,1], c=colors)
-        plt.show()
-
-        # Choose example to perturb
-        base_example = x_train[0] # Dimensions (HEIGHT, WIDTH, 1)
-        base_label = y_train[0]
-        
-        # Create perturbation values
-        perturbations = fgsm.generate_adversarial(base_example, base_label, model)
-        np_pert = tensor_to_numpy(perturbations)
-
-        # Create adversarial example
-        adv_x = base_example + (EPSILON) * perturbations
-        adv_x = tf.clip_by_value(adv_x, 0, 1)
-        adv_x = tensor_to_numpy(adv_x)
-        
-        # Print predictions
-        init_preds = model.predict(base_example.reshape(1, HEIGHT, WIDTH, 1))
-        init_pred = np.argmax(init_preds)
-        init_conf = init_preds[0,init_pred]
-        print("Initial prediction: " 
-            + str(init_pred)
-            + " with confidence: " 
-            + str(init_conf))
-        new_preds = model.predict(adv_x)
-        new_pred = np.argmax(new_preds)
-        new_conf = new_preds[0, new_pred]
-        print("New prediction: "
-            + str(new_pred)
-            + " with confidence: "
-            + str(new_conf))
-        
-        # Display examples
-        display(base_example)
-        display(np_pert)
-        display(adv_x)
-        plt.show()
-
-        # TODO:
-            # Learn manifold
-            # Find distance of new example to manifold
-            # Recalculate distance metric
-
-        # Learn manifold
-        
-
+    if K.image_data_format() == "channels_first":
+        x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
+        x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
+        input_shape = (1, img_rows, img_cols)
     else:
-        print("model file does not exist")
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
+        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
+        input_shape = (img_rows, img_cols, 1)
+
+    x_train = x_train.astype("float32")
+    x_test = x_test.astype("float32")
+    x_train /= 255
+    x_test /= 255
+
+    # convert class vectors to binary class matrices
+    y_train = keras.utils.to_categorical(y_train, num_classes)
+    y_test = keras.utils.to_categorical(y_test, num_classes)
+
+    return x_train, y_train, x_test, y_test, input_shape
+
+
+def generate_model(input_shape):
+    model = Sequential()
+    model.add(
+        Conv2D(32, kernel_size=(3, 3), activation="relu", input_shape=input_shape)
+    )
+    model.add(Conv2D(64, (3, 3), activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(128, activation="relu"))
+    model.add(Dropout(0.5))
+    model.add(Dense(num_classes, activation="softmax"))
+
+    model.compile(
+        loss=keras.losses.categorical_crossentropy,
+        optimizer=keras.optimizers.Adadelta(),
+        metrics=["accuracy"],
+    )
+
+    return model
+
+
+# from https://keras.io/examples/mnist_cnn/
+def main(batch_size=128, epochs=2):
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+    x_train, y_train, x_test, y_test, input_shape = preprocessing(
+        x_train, y_train, x_test, y_test
+    )
+
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+
+    model = generate_model(input_shape)
+
+    model.fit(
+        x_train,
+        y_train,
+        # steps_per_epoch=batch_size,
+        epochs=epochs,
+        verbose=1,
+        validation_data=(x_test, y_test),
+    )
+    score = model.evaluate(x_test, y_test, verbose=0)
+    print("Test loss:", score[0])
+    print("Test accuracy:", score[1])
+
+    model.save("mnist_model2.h5")
 
 
 if __name__ == "__main__":
-    main()
+    main(batch_size=128, epochs=2)
