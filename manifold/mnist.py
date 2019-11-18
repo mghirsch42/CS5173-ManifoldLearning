@@ -12,6 +12,7 @@ import numpy as np
 
 from models import mnist_model
 import fgsm
+import learning_methods as lm
 
 import os
 
@@ -58,9 +59,20 @@ def main():
         model = convert_to_model(model)
         model.trainable = True
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        y_org = y_train
         x_train, y_train, x_test, y_test, input_shape = mnist_model.preprocessing(
             x_train, y_train, x_test, y_test
         )
+        
+        m_x = x_train.reshape((60000, 28*28))
+        color_list = ["red", "orange", "yellow", "lime", "green", "cyan", "blue", "purple", "fuchsia", "peru"]
+        colors = [color_list[y_org[j]]  for j in range(5000)]
+        print(np.shape(colors))
+        
+        manifold = lm.lle(m_x[:5000])
+        print(np.shape(manifold))
+        plt.scatter(manifold[:,0], manifold[:,1], c=colors)
+        plt.show()
 
         # Choose example to perturb
         base_example = x_train[0] # Dimensions (HEIGHT, WIDTH, 1)
@@ -101,6 +113,10 @@ def main():
             # Learn manifold
             # Find distance of new example to manifold
             # Recalculate distance metric
+
+        # Learn manifold
+        
+
     else:
         print("model file does not exist")
 
