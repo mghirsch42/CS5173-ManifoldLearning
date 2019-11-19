@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
+
 def generate_adversarial(input_image, input_label, model):
     # from https://www.tensorflow.org/tutorials/generative/adversarial_fgsm
 
@@ -14,12 +15,13 @@ def generate_adversarial(input_image, input_label, model):
     # Create tensor from input
     input_tensor = tf.convert_to_tensor(input_image)
 
-    # Get loss of error 
+    # Get loss of error
     with tf.GradientTape() as tape:
         prediction = model(input_tensor)
         loss_val = tf.compat.v1.losses.softmax_cross_entropy(
-                    input_label, logits=prediction)
-                    
+            input_label, logits=prediction
+        )
+
     # Get gradient with respect to the input tensor
     gradient = tf.gradients(loss_val, input_tensor)
 

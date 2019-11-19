@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 
-import mnist
+import mnist_model
 import fgsm
 import learning_methods as lm
 
@@ -77,7 +77,7 @@ def main():
         )
 
         m_x = x_train.reshape((len(x_train), WIDTH * HEIGHT))
-        manifold = lm.lle(m_x[:5000])
+        manifold = lm.lle(m_x)
         plt.scatter(manifold[:, 0], manifold[:, 1], c=colors)
         plt.show()
 
