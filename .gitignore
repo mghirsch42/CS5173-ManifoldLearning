@@ -2,3 +2,7 @@
 .vscode/
 *.h5
 __pycache__/
+*.npy
+*.pkl
+*.zip
+*.code-workspace

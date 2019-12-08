@@ -1,6 +1,6 @@
 from __future__ import print_function
 import keras
-from keras.datasets import mnist
+from keras import datasets
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPooling2D
@@ -9,12 +9,21 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
+import pickle
 
 import mnist_model
 import fgsm
 import learning_methods as lm
+import mnist_model
 
 import os
+
+#########
+## Loads  pretrained MNIST model
+## Learns manifold on data
+## Creates adversarial images
+## Tests adversarial images on model
+#########
 
 WIDTH = 28
 HEIGHT = 28
@@ -36,10 +45,11 @@ def convert_to_model(seq_model):
 
 # Reshapes the input to the correct dimensions,
 # creates a new figure and displays the input
-def display(input):
+def display(input, title):
     if np.ndim(input) > 2:
         input = input.reshape((HEIGHT, WIDTH))
     plt.figure()
+    plt.title(title)
     plt.imshow(input)
 
 
@@ -58,7 +68,7 @@ def main():
         model = load_model(PATH_TO_MODEL)
         model = convert_to_model(model)
         model.trainable = True
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        (x_train, y_train), (x_test, y_test) = datasets.mnist.load_data()
         color_list = [
             "red",
             "orange",
@@ -77,9 +87,20 @@ def main():
         )
 
         m_x = x_train.reshape((len(x_train), WIDTH * HEIGHT))
-        manifold = lm.lle(m_x)
-        plt.scatter(manifold[:, 0], manifold[:, 1], c=colors)
-        plt.show()
+        # Train
+        # embedding, manifold = lm.laplacian(m_x[:20000])
+        # Save - change file names / comment as needed
+        # np.save("mnist-laplacian-20000-2d", manifold)
+        # pickle.dump(embedding, open("mnist-laplacian-20000-2d.pkl", "wb"))
+        
+        # Plot
+        # plt.scatter(manifold[:, 0], manifold[:, 1], c=colors[:20000])
+        # plt.show()
+        # exit(0)
+
+        # Load
+        manifold = np.load("mnist-laplacian-20000-2d.npy")
+        embedding = pickle.load(open("mnist-laplacian-20000-2d.pkl", "rb"))
 
         # Choose example to perturb
         base_example = x_train[0]  # Dimensions (HEIGHT, WIDTH, 1)
@@ -109,18 +130,24 @@ def main():
         new_conf = new_preds[0, new_pred]
         print("New prediction: " + str(new_pred) + " with confidence: " + str(new_conf))
 
+        # Plot manifold with adv example
+        plt.figure()
+        plt.scatter(manifold[:, 0], manifold[:, 1], c=colors[:20000])
+        adv_mx = embedding.transform(adv_x.reshape(1, HEIGHT*WIDTH))
+        print(adv_mx)
+        plt.scatter(adv_mx[0][0], adv_mx[0][1], c="k", s=75)
+        plt.show()
+
         # Display examples
-        display(base_example)
-        display(np_pert)
-        display(adv_x)
+        display(base_example, "Original Example")
+        display(np_pert, "Perturbation")
+        display(adv_x, "Adversarial Example")
         plt.show()
 
         # TODO:
-        # Learn manifold
         # Find distance of new example to manifold
         # Recalculate distance metric
 
-        # Learn manifold
 
     else:
         print("model file does not exist")

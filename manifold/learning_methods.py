@@ -9,16 +9,16 @@ def lle(x):
     """
     embedding = LocallyLinearEmbedding(n_components=2)  # 2D projection
     x_transformed = embedding.fit_transform(x)
-    return x_transformed
+    return embedding, x_transformed
 
 
 def isomap(x):
     embedding = Isomap(n_components=2)
     x_transformed = embedding.fit_transform(x)
-    return x_transformed
+    return embedding, x_transformed
 
 
 def laplacian(x):
     embedding = SpectralEmbedding(n_components=2)
     x_transformed = embedding.fit_transform(x)
-    return x_transformed
+    return embedding, x_transformed

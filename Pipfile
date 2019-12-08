@@ -12,6 +12,8 @@ keras = "==2.3.1"
 matplotlib = "*"
 numpy = "*"
 tensorflow = "==1.15"
+pil = "*"
+pillow = "*"
 
 [requires]
 python_version = "3.6"
