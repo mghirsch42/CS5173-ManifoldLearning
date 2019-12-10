@@ -6,3 +6,4 @@ __pycache__/
 *.pkl
 *.zip
 *.code-workspace
+*.png

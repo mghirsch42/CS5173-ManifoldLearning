@@ -12,8 +12,14 @@ import mnist_manifold
 import mnist_model
 
 import warnings
-
 warnings.filterwarnings("ignore")
+
+'''
+Load MNIST model, manifold model, and transformed adversarial examples
+Loop through adversarial examples, find prediction, adjust prediction 
+based on manifold and norms
+Report statistics
+'''
 
 
 PATH_TO_MODEL = "models/mnist_model.h5"
@@ -173,7 +179,7 @@ def main():
                 plt.show()
 
                 plt.figure()
-                plt.scatter(manifold[:, 0], manifold[:, 1], c=colors[:60000], s=25)
+                plt.scatter(manifold[:, 0], manifold[:, 1], c=colors[:20000], s=25)
                 print(adv_mx)
                 plt.scatter(adv_mx[0][0], adv_mx[0][1], c="k", s=40)
                 plt.show()
@@ -196,7 +202,7 @@ def main():
                     net_correct_sim_incorrect += 1
 
     else:
-        print("model file does not exist")
+        print("Model file does not exist")
 
     score = model.evaluate(
         np.array(adversarials).reshape(500, 28, 28, 1), y_test, verbose=0

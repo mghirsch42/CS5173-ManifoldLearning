@@ -1,4 +1,7 @@
 ### From https://github.com/sdpython/mlinsights
+
+### Note: The mlinsights package had a dependency conflict, so we just imported
+### this file since we only needed one class.
 """
 @file
 @brief Implements a predicatable *t-SNE*.
@@ -23,8 +26,14 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
     use this class.
     """
 
-    def __init__(self, normalizer=None, transformer=None, estimator=None,
-                 normalize=True, keep_tsne_outputs=False):
+    def __init__(
+        self,
+        normalizer=None,
+        transformer=None,
+        estimator=None,
+        normalize=True,
+        keep_tsne_outputs=False,
+    ):
         """
         @param      normalizer          None by default
         @param      transformer         :epkg:`sklearn:manifold:TSNE`
@@ -50,13 +59,20 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
         self.keep_tsne_outputs = keep_tsne_outputs
         if normalizer is not None and not hasattr(normalizer, "transform"):
             raise AttributeError(
-                "normalizer {} does not have a 'transform' method.".format(type(normalizer)))
+                "normalizer {} does not have a 'transform' method.".format(
+                    type(normalizer)
+                )
+            )
         if not hasattr(transformer, "fit_transform"):
             raise AttributeError(
-                "transformer {} does not have a 'fit_transform' method.".format(type(transformer)))
+                "transformer {} does not have a 'fit_transform' method.".format(
+                    type(transformer)
+                )
+            )
         if not hasattr(estimator, "predict"):
             raise AttributeError(
-                "estimator {} does not have a 'predict' method.".format(type(estimator)))
+                "estimator {} does not have a 'predict' method.".format(type(estimator))
+            )
         self.normalize = normalize
 
     def fit(self, X, y, sample_weight=None):
@@ -103,7 +119,7 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
         if self.normalizer is not None:
             sig = inspect.signature(self.normalizer.transform)
             pars = {}
-            for p in ['sample_weight', 'y']:
+            for p in ["sample_weight", "y"]:
                 if p in sig.parameters and p in params:
                     pars[p] = params[p]
             self.normalizer_ = clone(self.normalizer).fit(X, **pars)
@@ -115,21 +131,22 @@ class PredictableTSNE(BaseEstimator, TransformerMixin):
 
         sig = inspect.signature(self.transformer.fit_transform)
         pars = {}
-        for p in ['sample_weight', 'y']:
+        for p in ["sample_weight", "y"]:
             if p in sig.parameters and p in params:
                 pars[p] = params[p]
         target = self.transformer_.fit_transform(X, **pars)
 
         sig = inspect.signature(self.estimator.fit)
-        if 'sample_weight' in sig.parameters:
+        if "sample_weight" in sig.parameters:
             self.estimator_ = clone(self.estimator).fit(
-                X, target, sample_weight=sample_weight)
+                X, target, sample_weight=sample_weight
+            )
         else:
             self.estimator_ = clone(self.estimator).fit(X, target)
         mean = target.mean(axis=0)
         var = target.std(axis=0)
         self.mean_ = mean
-        self.inv_std_ = 1. / var
+        self.inv_std_ = 1.0 / var
         exp = (target - mean) * self.inv_std_
         got = (self.estimator_.predict(X) - mean) * self.inv_std_
         self.loss_ = mean_squared_error(exp, got)

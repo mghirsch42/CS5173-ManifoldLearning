@@ -9,8 +9,11 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
-
 import os
+
+'''
+Train and save a neural network model on the MNIST data
+'''
 
 num_classes = 10
 
@@ -78,12 +81,7 @@ def main(batch_size=128, epochs=2):
     model = generate_model(input_shape)
 
     model.fit(
-        x_train,
-        y_train,
-        # steps_per_epoch=batch_size,
-        epochs=epochs,
-        verbose=1,
-        validation_data=(x_test, y_test),
+        x_train, y_train, epochs=epochs, verbose=1, validation_data=(x_test, y_test)
     )
     score = model.evaluate(x_test, y_test, verbose=0)
     print("Test loss:", score[0])
